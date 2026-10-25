@@ -23,9 +23,9 @@ volatile LONG64 stat_texels;
 __declspec(thread) int in_present;
 __declspec(thread) int in_post;
 
-extern const char *const potatomode_forward_names[];
-extern void *potatomode_forward_table[];
-extern const int potatomode_forward_count;
+extern const char *const potatify_forward_names[];
+extern void *potatify_forward_table[];
+extern const int potatify_forward_count;
 
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 static HANDLE log_file = INVALID_HANDLE_VALUE;
@@ -74,8 +74,8 @@ static void open_log(const wchar_t *name)
     wchar_t *slash = wcsrchr(path, L'\\');
     if (!len || len >= MAX_PATH || !slash || slash - path + 32 >= MAX_PATH)
         return;
-    /* potatomode-d3d11.log and potatomode-d3d12.log: both proxies may load in one game. */
-    _snwprintf(slash + 1, 31, L"potatomode-%.5s.log", name);
+    /* potatify-d3d11.log and potatify-d3d12.log: both proxies may load in one game. */
+    _snwprintf(slash + 1, 31, L"potatify-%.5s.log", name);
     log_file = CreateFileW(path, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 }
 
@@ -87,12 +87,12 @@ static HRESULT WINAPI forward_missing(void)
 static BOOL CALLBACK init(PINIT_ONCE once, PVOID param, PVOID *ctx)
 {
     (void)once, (void)param, (void)ctx;
-    const wchar_t *name = potatomode_dll_name;
+    const wchar_t *name = potatify_dll_name;
     memcpy(&cfg, (const void *)&g_baked, sizeof cfg);
     InitializeCriticalSection(&hook_lock);
     if (cfg.log)
         open_log(name);
-    log_line("potatomode %ls: mip_skip=%u (default usage %u, min %u) sampler=%u pixelate=%u color_bits=%u "
+    log_line("potatify %ls: mip_skip=%u (default usage %u, min %u) sampler=%u pixelate=%u color_bits=%u "
              "render_scale=%u%%",
              name, cfg.mip_skip, cfg.mip_skip_default, cfg.min_texture_size, cfg.sampler_mode, cfg.pixelate,
              cfg.color_bits, cfg.render_scale);
@@ -106,9 +106,9 @@ static BOOL CALLBACK init(PINIT_ONCE once, PVOID param, PVOID *ctx)
     }
     if (!real_dll)
         log_line("cannot load the system %ls", name);
-    for (int i = 0; i < potatomode_forward_count; i++) {
-        FARPROC p = real_dll ? GetProcAddress(real_dll, potatomode_forward_names[i]) : NULL;
-        potatomode_forward_table[i] = p ? (void *)p : (void *)forward_missing;
+    for (int i = 0; i < potatify_forward_count; i++) {
+        FARPROC p = real_dll ? GetProcAddress(real_dll, potatify_forward_names[i]) : NULL;
+        potatify_forward_table[i] = p ? (void *)p : (void *)forward_missing;
     }
     return TRUE;
 }
@@ -124,10 +124,10 @@ FARPROC real_proc(const char *name)
     return real_dll ? GetProcAddress(real_dll, name) : NULL;
 }
 
-void *potatomode_resolve(int index)
+void *potatify_resolve(int index)
 {
     proxy_init();
-    return potatomode_forward_table[index];
+    return potatify_forward_table[index];
 }
 
 static struct {
@@ -238,7 +238,7 @@ HWND hidden_window(void)
     WNDCLASSW wc = {0};
     wc.lpfnWndProc = DefWindowProcW;
     wc.hInstance = GetModuleHandleW(NULL);
-    wc.lpszClassName = L"potatomode-probe";
+    wc.lpszClassName = L"potatify-probe";
     RegisterClassW(&wc);
     return CreateWindowExW(0, wc.lpszClassName, L"", WS_OVERLAPPED, 0, 0, 64, 64, NULL, NULL, wc.hInstance, NULL);
 }

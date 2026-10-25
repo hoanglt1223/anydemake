@@ -10,7 +10,7 @@ Start with offline games without anti-cheat. Good first candidates:
 - An Unreal Engine game (Black Myth: Wukong, most UE4/UE5 games): the `Engine.ini` settings apply, plus filtering and the look options.
 - A DirectX 12 game on another engine (Street Fighter 6): filtering and the look options only.
 
-To see which API a game uses, install with **Log** on and start the game: `potatomode-d3d11.log` or `potatomode-d3d12.log` appears next to the DLLs (both may appear; the one with fps lines is the one that draws).
+To see which API a game uses, install with **Log** on and start the game: `potatify-d3d11.log` or `potatify-d3d12.log` appears next to the DLLs (both may appear; the one with fps lines is the one that draws).
 
 ## Measure
 

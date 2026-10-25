@@ -1,5 +1,5 @@
 # One file per game: compat/<game-slug>.toml. Same shape as the AnyGBA compat
-# files; measurements come from the potatomode-d3d1x.log fps/VRAM lines.
+# files; measurements come from the potatify-d3d1x.log fps/VRAM lines.
 title = "Game name"
 api = "d3d11"                  # d3d11 | d3d12 | unreal-d3d12
 engine = ""                    # unreal4, unreal5, re-engine, unity, ...
@@ -7,7 +7,7 @@ stage = "untested"             # untested | starts | works | improved | broken
 gpu = ""                       # e.g. "GTX 1050 Ti 4 GB"
 resolution = "1920x1080"
 game_settings = "low"          # in-game preset used for both runs
-preset = "ps1"                 # PotatoMode preset or options used
+preset = "ps1"                 # Potatify preset or options used
 fps_before = 0.0
 fps_after = 0.0
 vram_mb_before = 0

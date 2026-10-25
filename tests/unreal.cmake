@@ -1,5 +1,5 @@
 # A fake packaged Unreal game: DLLs go next to the real exe, Engine.ini gets
-# one PotatoMode block that is replaced on reinstall and removed cleanly.
+# one Potatify block that is replaced on reinstall and removed cleanly.
 file(REMOVE_RECURSE ${DIR})
 set(bin ${DIR}/game/MyGame/Binaries/Win64)
 file(MAKE_DIRECTORY ${DIR}/game/Engine ${bin})
@@ -13,16 +13,16 @@ file(READ ${ini} original)
 function(run)
   execute_process(COMMAND ${TOOL} ${ARGN} RESULT_VARIABLE rc OUTPUT_VARIABLE out ERROR_VARIABLE err)
   if(rc)
-    message(FATAL_ERROR "potatomode ${ARGN} failed: ${out}${err}")
+    message(FATAL_ERROR "potatify ${ARGN} failed: ${out}${err}")
   endif()
 endfunction()
 
 function(count_blocks want)
   file(READ ${ini} text)
-  string(REGEX MATCHALL "potatomode begin" blocks "${text}")
+  string(REGEX MATCHALL "potatify begin" blocks "${text}")
   list(LENGTH blocks n)
   if(NOT n EQUAL want)
-    message(FATAL_ERROR "Engine.ini has ${n} PotatoMode blocks, want ${want}:\n${text}")
+    message(FATAL_ERROR "Engine.ini has ${n} Potatify blocks, want ${want}:\n${text}")
   endif()
 endfunction()
 

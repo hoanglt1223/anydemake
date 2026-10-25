@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const wchar_t potatomode_dll_name[] = L"d3d12.dll";
+const wchar_t potatify_dll_name[] = L"d3d12.dll";
 #define FRAMES 3
 
 /* ---- samplers ---------------------------------------------------------- */
@@ -187,7 +187,7 @@ static void post_release(void)
 static HRESULT compile(pD3DCompile fn, const char *entry, const char *target, ID3DBlob **blob)
 {
     ID3DBlob *err = NULL;
-    HRESULT hr = fn(post_hlsl, post_hlsl_len, "potatomode", NULL, NULL, entry, target, 0, 0, blob, &err);
+    HRESULT hr = fn(post_hlsl, post_hlsl_len, "potatify", NULL, NULL, entry, target, 0, 0, blob, &err);
     if (err) {
         log_line("shader %s: %.300s", entry, (const char *)ID3D10Blob_GetBufferPointer(err));
         ID3D10Blob_Release(err);

@@ -31,7 +31,7 @@ int demake_install(const wchar_t *dir, const demake_options *o, wchar_t *msg, si
 /* -2: a proxy DLL from another mod is in the way and force was not set. */
 #define DEMAKE_ERR_FOREIGN (-2)
 
-/* Removes what PotatoMode wrote (DLLs and Engine.ini block) and restores backups. */
+/* Removes what Potatify wrote (DLLs and Engine.ini block) and restores backups. */
 int demake_remove(const wchar_t *dir, wchar_t *msg, size_t msg_len);
 
 /* Reads the baked config of a DLL file or of the DLLs installed in dir.

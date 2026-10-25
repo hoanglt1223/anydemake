@@ -7,8 +7,8 @@
 
 #include "tool-core.h"
 
-#define BEGIN_MARK "; potatomode begin"
-#define END_MARK "; potatomode end"
+#define BEGIN_MARK "; potatify begin"
+#define END_MARK "; potatify end"
 
 static int is_dir(const wchar_t *path)
 {
@@ -137,7 +137,7 @@ static char *read_text(const wchar_t *path, size_t *len)
     return buf;
 }
 
-/* Drops a previous PotatoMode block: 1 if one was there, 0 if not, -1 if its
+/* Drops a previous Potatify block: 1 if one was there, 0 if not, -1 if its
    end marker is gone (edited by hand), in which case nothing is touched. */
 static int strip_block(char *text, size_t *len)
 {
@@ -160,7 +160,7 @@ static int strip_block(char *text, size_t *len)
 static int write_text(const wchar_t *path, const char *a, size_t alen, const char *b, size_t blen)
 {
     wchar_t tmp[MAX_PATH + 16];
-    _snwprintf(tmp, MAX_PATH + 16, L"%s.potatomode-tmp", path);
+    _snwprintf(tmp, MAX_PATH + 16, L"%s.potatify-tmp", path);
     HANDLE f = CreateFileW(tmp, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (f == INVALID_HANDLE_VALUE)
         return 0;
@@ -176,7 +176,7 @@ static int write_text(const wchar_t *path, const char *a, size_t alen, const cha
 
 static void backup_path(const wchar_t *path, wchar_t *out)
 {
-    _snwprintf(out, MAX_PATH + 32, L"%s.potatomode-backup", path);
+    _snwprintf(out, MAX_PATH + 32, L"%s.potatify-backup", path);
 }
 
 static void add(char *out, size_t cap, const char *line)
@@ -191,7 +191,7 @@ static void build_block(const demake_config *cfg, char *out, size_t cap)
     char line[96];
     int lowest = cfg->mip_skip >= 3;
     out[0] = 0;
-    add(out, cap, BEGIN_MARK " (written by potatomode.exe; remove it there or delete these lines)");
+    add(out, cap, BEGIN_MARK " (written by potatify.exe; remove it there or delete these lines)");
     add(out, cap, "[SystemSettings]");
     if (cfg->render_scale && cfg->render_scale < 100) {
         snprintf(line, sizeof line, "r.ScreenPercentage=%u", cfg->render_scale);
@@ -249,7 +249,7 @@ int unreal_write(const wchar_t *project, const demake_config *cfg, wchar_t *msg,
         }
         if (strip_block(text, &len) < 0) {
             free(text);
-            _snwprintf(msg, msg_len, L"%s has an PotatoMode block that was edited by hand; fix or delete it first",
+            _snwprintf(msg, msg_len, L"%s has an Potatify block that was edited by hand; fix or delete it first",
                        paths[i]);
             return -5;
         }
@@ -304,6 +304,6 @@ int unreal_remove(const wchar_t *project, wchar_t *msg, size_t msg_len)
     }
     if (!removed)
         return -1;
-    _snwprintf(msg, msg_len, L"removed the PotatoMode settings from the Engine.ini of %s", project);
+    _snwprintf(msg, msg_len, L"removed the Potatify settings from the Engine.ini of %s", project);
     return 0;
 }
