@@ -1,5 +1,7 @@
 # Potatify
 
+![Potatify: New games. Old PC. Potatify it.](site/og-image.png)
+
 **Run new, heavy PC games on a potato PC.** A lite / low-spec / min-spec patch for DirectX 11 and 12 games: spec down the graphics, keep the gameplay.
 
 [Website](https://hoanglt1223.github.io/potatify/) · [Download](https://github.com/hoanglt1223/potatify/releases/latest)
