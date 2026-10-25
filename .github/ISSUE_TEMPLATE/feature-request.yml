@@ -1,0 +1,14 @@
+name: Feature request
+description: A new option, preset, or engine you want supported.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should Potatify do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Which game or GPU would it help, and how?

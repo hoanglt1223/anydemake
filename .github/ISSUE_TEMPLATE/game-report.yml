@@ -1,0 +1,67 @@
+name: Game report
+description: Tell us how Potatify did on a game (works, broken, fps gained).
+title: "[Game] "
+labels: ["game-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Procedure: [docs/TESTING.md](https://github.com/hoanglt1223/potatify/blob/main/docs/TESTING.md). Offline games only, never online games with anti-cheat.
+  - type: input
+    id: game
+    attributes:
+      label: Game
+      placeholder: "Black Myth: Wukong (Steam, v1.0.8)"
+    validations:
+      required: true
+  - type: dropdown
+    id: api
+    attributes:
+      label: Which log has fps lines?
+      options: [potatify-d3d11.log, potatify-d3d12.log, neither / no log created]
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Result
+      options: [improved (faster or less VRAM), works (no visible gain), starts but looks broken, does not start]
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: GPU, CPU, RAM
+      placeholder: "GTX 1050 Ti 4 GB, i5-7400, 16 GB"
+    validations:
+      required: true
+  - type: input
+    id: settings
+    attributes:
+      label: In-game resolution and graphics preset
+      placeholder: "1920x1080, Low"
+  - type: input
+    id: options
+    attributes:
+      label: Potatify preset / options
+      placeholder: "PS1, render scale 50"
+    validations:
+      required: true
+  - type: textarea
+    id: numbers
+    attributes:
+      label: Before / after
+      description: fps and VRAM from the Off run and the preset run.
+      placeholder: "Off: 24 fps, 3900 MB. PS1: 41 fps, 2100 MB."
+  - type: textarea
+    id: notes
+    attributes:
+      label: What you saw
+      description: Glitches, which option caused them, screenshots. Attach both log files.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: The game is offline / has no anti-cheat.
+          required: true

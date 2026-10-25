@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Testing guide
+    url: https://github.com/hoanglt1223/potatify/blob/main/docs/TESTING.md
+    about: How to measure a game before and after.

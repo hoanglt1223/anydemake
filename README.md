@@ -71,3 +71,8 @@ cmake -S . -B out/msvc -G "Visual Studio 17 2022" -A x64
 cmake --build out/msvc --config Release
 ctest --test-dir out/msvc -C Release      # headless: WARP devices, hidden windows
 ```
+
+## Contributing
+
+Game reports matter most: see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[game report form](https://github.com/hoanglt1223/potatify/issues/new?template=game-report.yml).
