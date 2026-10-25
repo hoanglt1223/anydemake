@@ -1,5 +1,7 @@
 # Generates a .def, x64 MASM jump stubs and a name table for one proxy DLL.
 # Inputs: EXPORTS (list file), OWN (names implemented in C as proxy_<name>), LIB, OUT_DIR.
+# Run with cmake -P, which starts with old policies (IN_LIST needs CMP0057).
+cmake_minimum_required(VERSION 3.24)
 file(STRINGS ${EXPORTS} lines REGEX "^[0-9]")
 set(def "LIBRARY ${LIB}\nEXPORTS\n")
 # Each stub jumps through the table. An empty entry (a forwarded export called
