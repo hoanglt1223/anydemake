@@ -148,10 +148,10 @@ static int write_proxy(const wchar_t *path, int resource, const demake_config *c
     if (GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES && read_one(path, &existing) != 0) {
         if (!force) {
             free(data);
-            _snwprintf(msg, msg_len, L"%s exists and was not written by AnyDemake (another mod?); use force to back it up and replace it", path);
+            _snwprintf(msg, msg_len, L"%s exists and was not written by PotatoMode (another mod?); use force to back it up and replace it", path);
             return DEMAKE_ERR_FOREIGN;
         }
-        _snwprintf(backup, MAX_PATH + 32, L"%s.anydemake-backup", path);
+        _snwprintf(backup, MAX_PATH + 32, L"%s.potatomode-backup", path);
         if (GetFileAttributesW(backup) != INVALID_FILE_ATTRIBUTES) {
             free(data);
             _snwprintf(msg, msg_len, L"%s already exists; move it away first so the older backup is not lost", backup);
@@ -198,7 +198,7 @@ int demake_install(const wchar_t *dir, const demake_options *o, wchar_t *msg, si
         _snwprintf(path, MAX_PATH + 16, L"%s\\%s", bin, proxies[i].file);
         if ((o->apis & proxies[i].api) && !o->force && GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES &&
             read_one(path, &existing) != 0) {
-            _snwprintf(msg, msg_len, L"%s exists and was not written by AnyDemake (another mod?); use force to back it up and replace it", path);
+            _snwprintf(msg, msg_len, L"%s exists and was not written by PotatoMode (another mod?); use force to back it up and replace it", path);
             return DEMAKE_ERR_FOREIGN;
         }
     }
@@ -216,7 +216,7 @@ int demake_install(const wchar_t *dir, const demake_options *o, wchar_t *msg, si
                     _snwprintf(path, MAX_PATH + 16, L"%s\\%s", bin, proxies[j].file);
                     DeleteFileW(path);
                     wchar_t backup[MAX_PATH + 48];
-                    _snwprintf(backup, MAX_PATH + 48, L"%s.anydemake-backup", path);
+                    _snwprintf(backup, MAX_PATH + 48, L"%s.potatomode-backup", path);
                     MoveFileW(backup, path);
                 }
             return rc;
@@ -250,7 +250,7 @@ int demake_remove(const wchar_t *dir, wchar_t *msg, size_t msg_len)
             continue;
         }
         removed = 1;
-        _snwprintf(backup, MAX_PATH + 48, L"%s.anydemake-backup", path);
+        _snwprintf(backup, MAX_PATH + 48, L"%s.potatomode-backup", path);
         if (GetFileAttributesW(backup) != INVALID_FILE_ATTRIBUTES && MoveFileW(backup, path))
             _snwprintf(line, MAX_PATH + 200, L"removed %s and restored the previous one", path);
         else
@@ -262,6 +262,6 @@ int demake_remove(const wchar_t *dir, wchar_t *msg, size_t msg_len)
         removed = 1;
     }
     if (!removed && !failed)
-        _snwprintf(msg, msg_len, L"nothing from AnyDemake in %s", dir);
+        _snwprintf(msg, msg_len, L"nothing from PotatoMode in %s", dir);
     return failed ? -2 : removed ? 0 : -1;
 }

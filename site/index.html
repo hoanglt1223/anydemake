@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AnyDemake: run heavy PC games on weak hardware</title>
+<title>PotatoMode: new, heavy PC games on a potato PC</title>
 <meta name="description" content="Drop one DLL next to a game's .exe: lower render resolution, smaller textures, cheaper filtering and an optional retro look. Same gameplay, lighter GPU load. Free and open source.">
-<meta property="og:title" content="AnyDemake">
-<meta property="og:description" content="The opposite of an upscaler: make modern PC games lighter by demaking their graphics, without touching gameplay.">
+<meta property="og:title" content="PotatoMode">
+<meta property="og:description" content="Run new, heavy PC games on a potato PC: one DLL lowers what the GPU has to draw, and the gameplay stays the same.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -154,17 +154,17 @@
       <a href="#how">How it works</a>
       <a href="#options">Options</a>
       <a href="#faq">FAQ</a>
-      <a href="https://github.com/hoanglt1223/anydemake">GitHub</a>
+      <a href="https://github.com/hoanglt1223/potatomode">GitHub</a>
     </div>
   </nav>
 
   <header class="hero">
     <span class="badge">Free &amp; open source · Windows · Experimental preview</span>
-    <h1 class="pixel">Upscalers make games prettier.<br><em>AnyDemake makes them lighter.</em></h1>
-    <p class="lead">Drop one DLL next to a game's <code>.exe</code>. It renders fewer pixels, loads smaller textures and skips expensive filtering, so heavy PC games ask less of weak GPUs. The game logic is never touched, so the gameplay stays exactly the same.</p>
+    <h1 class="pixel">New games.<br>Old PC.<br><em>Potato mode on.</em></h1>
+    <p class="lead">The opposite of an upscaler. Drop one DLL next to a game's <code>.exe</code> and it renders fewer pixels, loads smaller textures and skips expensive effects, so new, heavy PC games ask far less of a weak GPU or an integrated laptop chip. The game logic is never touched, so it plays exactly the same; it just looks a few console generations older.</p>
     <div class="cta">
-      <a class="btn primary" href="https://github.com/hoanglt1223/anydemake/releases/latest">↓ Download for Windows</a>
-      <a class="btn ghost" href="https://github.com/hoanglt1223/anydemake">★ Source on GitHub</a>
+      <a class="btn primary" href="https://github.com/hoanglt1223/potatomode/releases/latest">↓ Download for Windows</a>
+      <a class="btn ghost" href="https://github.com/hoanglt1223/potatomode">★ Source on GitHub</a>
     </div>
     <p class="fine">One portable .exe, no installer, MIT license. Offline games only: never use it in games with anti-cheat.</p>
   </header>
@@ -207,15 +207,15 @@
 
   <section id="how" aria-labelledby="how-title">
     <h2 id="how-title" class="pixel">How it works</h2>
-    <p class="sub">Games don't draw pictures themselves. They send commands to the GPU through DirectX, and DirectX lives in a DLL. Windows looks for DLLs in the game's folder first, so AnyDemake's DLL gets loaded instead of the real one. It passes every call on to the real DirectX, after editing a few of them.</p>
-    <div class="flow" role="img" aria-label="Diagram: the game sends commands to the AnyDemake DLL, which forwards edited commands to the real DirectX DLL and the GPU">Game ──commands──► <span class="hl">d3d11.dll / d3d12.dll (AnyDemake)</span> ──edited commands──► System32 DirectX ──► GPU
+    <p class="sub">Games don't draw pictures themselves. They send commands to the GPU through DirectX, and DirectX lives in a DLL. Windows looks for DLLs in the game's folder first, so PotatoMode's DLL gets loaded instead of the real one. It passes every call on to the real DirectX, after editing a few of them.</p>
+    <div class="flow" role="img" aria-label="Diagram: the game sends commands to the PotatoMode DLL, which forwards edited commands to the real DirectX DLL and the GPU">Game ──commands──► <span class="hl">d3d11.dll / d3d12.dll (PotatoMode)</span> ──edited commands──► System32 DirectX ──► GPU
 
 "make a 1920×1080 buffer"      →  "make a 960×540 buffer"           ¼ of the pixels to shade
 "upload this 4096² texture"    →  "upload its 1024² mip"            1/16 of the VRAM
 "16× anisotropic filtering"    →  "plain bilinear" or "point"       fewer texture reads
 "present the frame"            →  pixelate + fewer colours first    retro look (optional)</div>
     <div class="grid3" style="margin-top:16px">
-      <div class="card"><span class="num pixel">01</span><h3>Gameplay untouched</h3><p>Positions, hits and timing are computed by the game on the CPU. AnyDemake only edits drawing commands, so a demade game plays exactly like the original.</p></div>
+      <div class="card"><span class="num pixel">01</span><h3>Gameplay untouched</h3><p>Positions, hits and timing are computed by the game on the CPU. PotatoMode only edits drawing commands, so a demade game plays exactly like the original.</p></div>
       <div class="card"><span class="num pixel">02</span><h3>Menus stay sharp</h3><p>Only the 3D scene buffers are made smaller. The game's UI still draws at full resolution on top.</p></div>
       <div class="card"><span class="num pixel">03</span><h3>One click to undo</h3><p>Remove deletes everything it wrote and restores any DLL or Engine.ini it backed up. Nothing in the game's own files is patched.</p></div>
     </div>
@@ -242,7 +242,7 @@
   <section id="start" aria-labelledby="start-title">
     <h2 id="start-title" class="pixel">Get started in a minute</h2>
     <ol class="steps">
-      <li><b>Download</b> the zip from <a href="https://github.com/hoanglt1223/anydemake/releases/latest">Releases</a> and run <code>anydemake.exe</code>. No installer.</li>
+      <li><b>Download</b> the zip from <a href="https://github.com/hoanglt1223/potatomode/releases/latest">Releases</a> and run <code>potatomode.exe</code>. No installer.</li>
       <li><b>Choose the game folder</b>: the one with the game's <code>.exe</code>. For Unreal Engine games the root folder works too.</li>
       <li><b>Pick a preset</b> and press <b>Install</b>. Start the game. Not happy? Press <b>Remove</b>.</li>
     </ol>
@@ -251,24 +251,24 @@
   <section aria-labelledby="help-title">
     <div class="callout">
       <h2 id="help-title" class="pixel">Help measure it</h2>
-      <p class="sub" style="margin:0 auto 18px">AnyDemake is new. Its automated tests run on a software GPU, and real-game numbers don't exist yet. Run a game once with the <b>Off</b> preset and the log on, then once with a preset, and share the two logs. That is the most useful contribution right now.</p>
-      <a class="btn ghost" href="https://github.com/hoanglt1223/anydemake/blob/main/docs/TESTING.md">How to test a game</a>
+      <p class="sub" style="margin:0 auto 18px">PotatoMode is new. Its automated tests run on a software GPU, and real-game numbers don't exist yet. Run a game once with the <b>Off</b> preset and the log on, then once with a preset, and share the two logs. That is the most useful contribution right now.</p>
+      <a class="btn ghost" href="https://github.com/hoanglt1223/potatomode/blob/main/docs/TESTING.md">How to test a game</a>
     </div>
   </section>
 
   <section id="faq" aria-labelledby="faq-title">
     <h2 id="faq-title" class="pixel">FAQ</h2>
-    <details><summary>Can I use it in online games?</summary><p>No. Games with anti-cheat (Vanguard, EasyAntiCheat, BattlEye and others) may ban accounts for loading a foreign DLL. AnyDemake is meant for offline and single-player games, and it does nothing to hide itself.</p></details>
+    <details><summary>Can I use it in online games?</summary><p>No. Games with anti-cheat (Vanguard, EasyAntiCheat, BattlEye and others) may ban accounts for loading a foreign DLL. PotatoMode is meant for offline and single-player games, and it does nothing to hide itself.</p></details>
     <details><summary>Will it make every game faster?</summary><p>Only games limited by the GPU or VRAM. If a game is slow because of the CPU (AI, physics, huge simulations), drawing fewer pixels won't help. It also can't add GPU features your card doesn't have, such as ray tracing or mesh shaders.</p></details>
     <details><summary>Which games does it work with?</summary><p>DirectX 11 games get every option. DirectX 12 games get filtering and the look options; Unreal Engine games also get lower resolution and textures through their Engine.ini. Vulkan and OpenGL games aren't supported yet.</p></details>
-    <details><summary>Only part of the picture shows. What now?</summary><p>Some games read their screen buffers by pixel position. Set "3D render resolution" back to Full for that game. If the game copies between buffers, AnyDemake notices, stops scaling, and says so in the log.</p></details>
-    <details><summary>Is it safe for my game files?</summary><p>It only adds files next to the game. Any DLL that already sits there is backed up first (and AnyDemake refuses to overwrite an existing backup). Engine.ini edits are a marked block, and the original file is kept for Remove.</p></details>
+    <details><summary>Only part of the picture shows. What now?</summary><p>Some games read their screen buffers by pixel position. Set "3D render resolution" back to Full for that game. If the game copies between buffers, PotatoMode notices, stops scaling, and says so in the log.</p></details>
+    <details><summary>Is it safe for my game files?</summary><p>It only adds files next to the game. Any DLL that already sits there is backed up first (and PotatoMode refuses to overwrite an existing backup). Engine.ini edits are a marked block, and the original file is kept for Remove.</p></details>
   </section>
 </div>
 
 <footer>
   <div class="wrap">
-    <p class="pixel" style="font-size:11px">AnyDemake</p>
+    <p class="pixel" style="font-size:11px">PotatoMode</p>
     <p>MIT licensed · Made by <a href="https://github.com/hoanglt1223">hoanglt1223</a> · Not affiliated with any game publisher.</p>
   </div>
 </footer>

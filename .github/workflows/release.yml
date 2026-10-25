@@ -1,6 +1,6 @@
 name: release
 
-# A pushed tag v* builds and tests anydemake.exe (both proxy DLLs are embedded
+# A pushed tag v* builds and tests potatomode.exe (both proxy DLLs are embedded
 # in it) and attaches a zip to a GitHub Release.
 on:
   push:
@@ -22,9 +22,9 @@ jobs:
       - name: Package
         shell: pwsh
         run: |
-          $pkg = "anydemake-$env:GITHUB_REF_NAME-windows-x64"
+          $pkg = "potatomode-$env:GITHUB_REF_NAME-windows-x64"
           New-Item -ItemType Directory "package/$pkg" | Out-Null
-          Copy-Item out/Release/anydemake.exe, README.md, LICENSE, docs/TESTING.md "package/$pkg/"
+          Copy-Item out/Release/potatomode.exe, README.md, LICENSE, docs/TESTING.md "package/$pkg/"
           Compress-Archive -Path "package/$pkg" -DestinationPath "package/$pkg.zip"
           "PKG=$pkg" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
       - name: Publish
@@ -34,7 +34,7 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" "package/$PKG.zip" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "AnyDemake $GITHUB_REF_NAME" \
+            --title "PotatoMode $GITHUB_REF_NAME" \
             --notes-file .github/release-notes.md \
             --prerelease \
             --verify-tag

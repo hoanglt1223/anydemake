@@ -193,7 +193,7 @@ static void check_present(UINT block, UINT bits)
     WNDCLASSW wc = {0};
     wc.lpfnWndProc = DefWindowProcW;
     wc.hInstance = GetModuleHandleW(NULL);
-    wc.lpszClassName = L"anydemake-test12";
+    wc.lpszClassName = L"potatomode-test12";
     RegisterClassW(&wc);
     HWND hwnd = CreateWindowExW(0, wc.lpszClassName, L"", WS_OVERLAPPED, 0, 0, W, H, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwnd, "window");

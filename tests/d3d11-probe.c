@@ -73,7 +73,7 @@ static void check_present(UINT block, UINT bits)
     WNDCLASSW wc = {0};
     wc.lpfnWndProc = DefWindowProcW;
     wc.hInstance = GetModuleHandleW(NULL);
-    wc.lpszClassName = L"anydemake-test";
+    wc.lpszClassName = L"potatomode-test";
     RegisterClassW(&wc);
     HWND hwnd = CreateWindowExW(0, wc.lpszClassName, L"", WS_OVERLAPPED, 0, 0, W, H, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwnd, "window");
@@ -152,7 +152,7 @@ static IDXGISwapChain *make_swapchain(UINT w, UINT h, HWND *hwnd_out)
     WNDCLASSW wc = {0};
     wc.lpfnWndProc = DefWindowProcW;
     wc.hInstance = GetModuleHandleW(NULL);
-    wc.lpszClassName = L"anydemake-test-sc";
+    wc.lpszClassName = L"potatomode-test-sc";
     RegisterClassW(&wc);
     HWND hwnd = CreateWindowExW(0, wc.lpszClassName, L"", WS_OVERLAPPED, 0, 0, w, h, NULL, NULL, wc.hInstance, NULL);
     CHECK(hwnd, "window");

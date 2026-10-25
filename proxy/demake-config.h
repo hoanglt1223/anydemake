@@ -3,7 +3,7 @@
 
 /* The configurator finds this block in the template DLL by its magic and
    overwrites the fields, so the layout is a file format: append only. */
-#define DEMAKE_CONFIG_MAGIC "ANYDEMAKE-CFG-v1"
+#define DEMAKE_CONFIG_MAGIC "POTATOMODE-CFGv1"
 
 enum demake_sampler_mode {
     DEMAKE_SAMPLER_KEEP = 0,
@@ -20,6 +20,6 @@ typedef struct demake_config {
     uint32_t sampler_mode;        /* enum demake_sampler_mode */
     uint32_t pixelate;            /* block size in pixels at Present, 0/1 = off */
     uint32_t color_bits;          /* bits per channel at Present, 0 = off */
-    uint32_t log;                 /* write anydemake-<api>.log next to the DLL */
+    uint32_t log;                 /* write potatomode-<api>.log next to the DLL */
     uint32_t render_scale;        /* percent of the screen size for 3D render targets, 0/100 = off */
 } demake_config;

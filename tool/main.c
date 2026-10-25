@@ -13,14 +13,14 @@ static const char *sampler_names[] = {"keep", "point", "bilinear"};
 static int usage(void)
 {
     fwprintf(stderr,
-             L"usage: anydemake                       (opens the window)\n"
-             L"       anydemake --out <game dir> [--preset off|light|ps2|ps1|potato]\n"
+             L"usage: potatomode                       (opens the window)\n"
+             L"       potatomode --out <game dir> [--preset off|light|ps2|ps1|potato]\n"
              L"                 [--mip-skip 0-4] [--mip-skip-default] [--min-size N]\n"
              L"                 [--sampler keep|point|bilinear] [--pixelate N] [--color-bits 0-8]\n"
              L"                 [--render-scale 25-100] [--api d3d11|d3d12|both] [--unreal auto|off]\n"
              L"                 [--log] [--force]\n"
-             L"       anydemake --read <game dir | dll>\n"
-             L"       anydemake --remove <game dir>\n");
+             L"       potatomode --read <game dir | dll>\n"
+             L"       potatomode --remove <game dir>\n");
     return 2;
 }
 
@@ -58,7 +58,7 @@ static int run_cli(int argc, wchar_t **argv)
         if (!wcscmp(a, L"--read") && v) {
             unsigned apis = 0;
             if (demake_read(v, &o.cfg, &apis) != 0) {
-                fwprintf(stderr, L"no AnyDemake config in %s\n", v);
+                fwprintf(stderr, L"no PotatoMode config in %s\n", v);
                 return 1;
             }
             print_config(&o.cfg, apis);
@@ -302,8 +302,8 @@ static void on_command(int id, int code)
         if (rc == DEMAKE_ERR_FOREIGN &&
             MessageBoxW(wnd,
                         L"This folder already has a d3d11.dll or d3d12.dll from another mod or tool.\n\n"
-                        L"Back it up (.anydemake-backup) and replace it? Remove puts it back.",
-                        L"AnyDemake", MB_YESNO | MB_ICONWARNING) == IDYES) {
+                        L"Back it up (.potatomode-backup) and replace it? Remove puts it back.",
+                        L"PotatoMode", MB_YESNO | MB_ICONWARNING) == IDYES) {
             o.force = 1;
             rc = demake_install(dir, &o, msg, COUNT(msg));
         }
@@ -325,7 +325,7 @@ static void on_command(int id, int code)
                 set_check(ID_D3D12, apis & DEMAKE_API_D3D12);
                 status(L"Loaded the settings of the installed DLLs.");
             } else {
-                status(L"No AnyDemake DLL in this folder.");
+                status(L"No PotatoMode DLL in this folder.");
             }
         }
         break;
@@ -359,12 +359,12 @@ static int run_gui(void)
     wc.hInstance = GetModuleHandleW(NULL);
     wc.hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
     wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
-    wc.lpszClassName = L"anydemake";
+    wc.lpszClassName = L"potatomode";
     RegisterClassW(&wc);
     RECT r = {0, 0, WIN_W, WIN_H};
     DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
     AdjustWindowRect(&r, style, FALSE);
-    wnd = CreateWindowExW(0, wc.lpszClassName, L"AnyDemake", style, CW_USEDEFAULT, CW_USEDEFAULT, r.right - r.left,
+    wnd = CreateWindowExW(0, wc.lpszClassName, L"PotatoMode", style, CW_USEDEFAULT, CW_USEDEFAULT, r.right - r.left,
                           r.bottom - r.top, NULL, NULL, wc.hInstance, NULL);
 
     wchar_t t[64];
@@ -430,7 +430,7 @@ static int run_gui(void)
         combo_add(ID_BITS, t);
     }
     y += 32;
-    check(ID_LOG, L"Write anydemake-d3d1x.log next to the game", 220, y, 290);
+    check(ID_LOG, L"Write potatomode-d3d1x.log next to the game", 220, y, 290);
     y += 34;
     add(L"BUTTON", L"Install", BS_DEFPUSHBUTTON | WS_TABSTOP, 16, y, 156, 28, ID_INSTALL);
     add(L"BUTTON", L"Load installed", WS_TABSTOP, 182, y, 156, 28, ID_LOAD);

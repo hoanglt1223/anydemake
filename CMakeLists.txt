@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.24)
-project(anydemake C)
+project(potatomode C)
 
 if(NOT WIN32)
-  message(FATAL_ERROR "AnyDemake is a Windows DirectX proxy")
+  message(FATAL_ERROR "PotatoMode is a Windows DirectX proxy")
 endif()
 
 set(CMAKE_C_STANDARD 11)
@@ -39,11 +39,11 @@ file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/gen/$<CONFIG>/proxy.rc
 IDR_PROXY_D3D11 RCDATA \"$<TARGET_FILE:proxy_d3d11>\"
 IDR_PROXY_D3D12 RCDATA \"$<TARGET_FILE:proxy_d3d12>\"
 ")
-add_executable(anydemake WIN32 tool/main.c tool/tool-core.c tool/unreal.c ${CMAKE_BINARY_DIR}/gen/$<CONFIG>/proxy.rc)
-target_include_directories(anydemake PRIVATE tool)
-target_link_libraries(anydemake PRIVATE comctl32 shell32 ole32)
-target_link_options(anydemake PRIVATE /ENTRY:wmainCRTStartup)
-add_dependencies(anydemake proxy_d3d11 proxy_d3d12)
+add_executable(potatomode WIN32 tool/main.c tool/tool-core.c tool/unreal.c ${CMAKE_BINARY_DIR}/gen/$<CONFIG>/proxy.rc)
+target_include_directories(potatomode PRIVATE tool)
+target_link_libraries(potatomode PRIVATE comctl32 shell32 ole32)
+target_link_options(potatomode PRIVATE /ENTRY:wmainCRTStartup)
+add_dependencies(potatomode proxy_d3d11 proxy_d3d12)
 set_source_files_properties(${CMAKE_BINARY_DIR}/gen/$<CONFIG>/proxy.rc PROPERTIES
   OBJECT_DEPENDS "$<TARGET_FILE:proxy_d3d11>;$<TARGET_FILE:proxy_d3d12>")
 
@@ -56,14 +56,14 @@ if(BUILD_TESTING)
   target_link_libraries(d3d12-probe PRIVATE dxguid dxgi)
   target_link_options(d3d12-probe PRIVATE /ENTRY:wmainCRTStartup)
 
-  # name | anydemake arguments | probe arguments
+  # name | potatomode arguments | probe arguments
   function(demake_case name tool_args probe_args)
     set(api d3d11)
     if(name MATCHES "^d3d12_")
       set(api d3d12)
     endif()
     add_test(NAME ${name} COMMAND ${CMAKE_COMMAND}
-      -DTOOL=$<TARGET_FILE:anydemake> -DPROBE=$<TARGET_FILE:${api}-probe> -DDLL=${api}.dll
+      -DTOOL=$<TARGET_FILE:potatomode> -DPROBE=$<TARGET_FILE:${api}-probe> -DDLL=${api}.dll
       -DDIR=${CMAKE_BINARY_DIR}/test-games/${name}
       "-DTOOL_ARGS=${tool_args}" "-DPROBE_ARGS=${probe_args}"
       -P ${CMAKE_SOURCE_DIR}/tests/run-case.cmake)
@@ -89,10 +89,10 @@ if(BUILD_TESTING)
   demake_case(d3d12_pixelate_4 "--pixelate;4" "present;4;0")
   demake_case(d3d12_pixelate_3_bits_2 "--pixelate;3;--color-bits;2" "present;3;2")
   demake_case(d3d12_api_only "--api;d3d12;--sampler;point" "sampler;1;1")
-  add_test(NAME refuse_foreign_dll COMMAND ${CMAKE_COMMAND} -DTOOL=$<TARGET_FILE:anydemake>
+  add_test(NAME refuse_foreign_dll COMMAND ${CMAKE_COMMAND} -DTOOL=$<TARGET_FILE:potatomode>
     -DDIR=${CMAKE_BINARY_DIR}/test-games/foreign -P ${CMAKE_SOURCE_DIR}/tests/foreign-dll.cmake)
-  add_test(NAME stats_log COMMAND ${CMAKE_COMMAND} -DTOOL=$<TARGET_FILE:anydemake>
+  add_test(NAME stats_log COMMAND ${CMAKE_COMMAND} -DTOOL=$<TARGET_FILE:potatomode>
     -DPROBE=$<TARGET_FILE:d3d11-probe> -DDIR=${CMAKE_BINARY_DIR}/test-games/stats -P ${CMAKE_SOURCE_DIR}/tests/stats-log.cmake)
-  add_test(NAME unreal_engine_ini COMMAND ${CMAKE_COMMAND} -DTOOL=$<TARGET_FILE:anydemake>
+  add_test(NAME unreal_engine_ini COMMAND ${CMAKE_COMMAND} -DTOOL=$<TARGET_FILE:potatomode>
     -DDIR=${CMAKE_BINARY_DIR}/test-games/unreal -P ${CMAKE_SOURCE_DIR}/tests/unreal.cmake)
 endif()
