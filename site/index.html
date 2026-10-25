@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AnyDemake: run heavy PC games on weak hardware</title>
+<meta name="description" content="Drop one DLL next to a game's .exe: lower render resolution, smaller textures, cheaper filtering and an optional retro look. Same gameplay, lighter GPU load. Free and open source.">
+<meta property="og:title" content="AnyDemake">
+<meta property="og:description" content="The opposite of an upscaler: make modern PC games lighter by demaking their graphics, without touching gameplay.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0b1a;
+    --bg2: #161230;
+    --panel: #1d1840;
+    --text: #ece9ff;
+    --muted: #a59fd0;
+    --accent: #ff4fa3;
+    --accent2: #3ee6ff;
+    --ok: #7dff9b;
+    --warn: #ffd166;
+    --border: #2f2766;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  a { color: var(--accent2); }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 3px solid var(--warn);
+    outline-offset: 2px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  .pixel { font-family: "Press Start 2P", monospace; letter-spacing: .5px; }
+
+  nav { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; gap: 12px; }
+  nav .logo { font-size: 14px; color: var(--text); text-decoration: none; }
+  nav .logo span { color: var(--accent); }
+  nav .links { display: flex; gap: 18px; flex-wrap: wrap; }
+  nav .links a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 14px; }
+  nav .links a:hover { color: var(--text); }
+
+  header.hero { padding: 48px 0 24px; text-align: center; }
+  .badge {
+    display: inline-block; font-size: 12px; font-weight: 600; color: var(--warn);
+    border: 1px solid var(--warn); border-radius: 999px; padding: 4px 12px; margin-bottom: 20px;
+  }
+  h1 { font-size: clamp(22px, 4.6vw, 44px); line-height: 1.35; margin: 0 0 20px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lead { font-size: clamp(16px, 2.2vw, 20px); color: var(--muted); max-width: 720px; margin: 0 auto 28px; }
+  .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; border-radius: 10px;
+    font-weight: 800; text-decoration: none; border: 2px solid transparent;
+  }
+  .btn.primary { background: var(--accent); color: #1a0010; box-shadow: 0 6px 0 #a3105c; }
+  .btn.primary:hover { transform: translateY(1px); box-shadow: 0 5px 0 #a3105c; }
+  .btn.ghost { border-color: var(--border); color: var(--text); background: var(--bg2); }
+  .btn.ghost:hover { border-color: var(--accent2); }
+  .fine { color: var(--muted); font-size: 13px; margin-top: 14px; }
+
+  section { padding: 56px 0; }
+  h2 { font-size: clamp(16px, 2.6vw, 22px); margin: 0 0 12px; line-height: 1.5; }
+  .sub { color: var(--muted); margin: 0 0 28px; max-width: 720px; }
+
+  .demo { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .screen { position: relative; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 16 / 9; }
+  .screen canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .screen .tag {
+    position: absolute; top: 10px; font-size: 10px; padding: 6px 8px; border-radius: 6px;
+    background: rgba(0, 0, 0, .65); color: #fff; pointer-events: none;
+  }
+  .screen .tag.l { left: 10px; }
+  .screen .tag.r { right: 10px; }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+  .control label { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .control output { color: var(--accent2); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; align-items: center; }
+  .presets button, .toggle {
+    font: inherit; font-weight: 600; font-size: 14px; color: var(--text); background: var(--bg2);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; cursor: pointer;
+  }
+  .presets button[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
+  .meter { margin-top: 16px; font-size: 14px; color: var(--muted); }
+  .meter b { color: var(--ok); font-variant-numeric: tabular-nums; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+  .card h3 { margin: 0 0 8px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); }
+  .num { font-size: 12px; color: var(--accent); margin-bottom: 12px; display: block; }
+
+  .flow {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 14px; background: #08061a;
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; overflow-x: auto; color: #cfc8ff;
+    white-space: pre; line-height: 1.7;
+  }
+  .flow .hl { color: var(--accent); }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  table { width: 100%; border-collapse: collapse; min-width: 640px; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--bg2); font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  tr:last-child td { border-bottom: 0; }
+  .y { color: var(--ok); font-weight: 700; }
+  .p { color: var(--warn); font-weight: 700; }
+  .n { color: var(--muted); }
+
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .steps li {
+    counter-increment: s; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 16px 16px 64px; position: relative;
+  }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 16px; top: 14px; width: 32px; height: 32px; border-radius: 8px;
+    background: var(--accent); color: #1a0010; display: grid; place-items: center;
+    font-family: "Press Start 2P", monospace; font-size: 12px;
+  }
+
+  details { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 700; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+
+  .callout {
+    border: 2px dashed var(--accent2); border-radius: var(--radius); padding: 24px; text-align: center; background: var(--bg2);
+  }
+  footer { padding: 40px 0 60px; color: var(--muted); font-size: 14px; text-align: center; border-top: 1px solid var(--border); }
+
+  @media (max-width: 560px) {
+    nav .links { display: none; }
+    .steps li { padding-left: 16px; padding-top: 60px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav aria-label="Main">
+    <a class="logo pixel" href="#">Any<span>Demake</span></a>
+    <div class="links">
+      <a href="#demo">Demo</a>
+      <a href="#how">How it works</a>
+      <a href="#options">Options</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/hoanglt1223/anydemake">GitHub</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <span class="badge">Free &amp; open source · Windows · Experimental preview</span>
+    <h1 class="pixel">Upscalers make games prettier.<br><em>AnyDemake makes them lighter.</em></h1>
+    <p class="lead">Drop one DLL next to a game's <code>.exe</code>. It renders fewer pixels, loads smaller textures and skips expensive filtering, so heavy PC games ask less of weak GPUs. The game logic is never touched, so the gameplay stays exactly the same.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/hoanglt1223/anydemake/releases/latest">↓ Download for Windows</a>
+      <a class="btn ghost" href="https://github.com/hoanglt1223/anydemake">★ Source on GitHub</a>
+    </div>
+    <p class="fine">One portable .exe, no installer, MIT license. Offline games only: never use it in games with anti-cheat.</p>
+  </header>
+
+  <section id="demo" aria-labelledby="demo-title">
+    <h2 id="demo-title" class="pixel">Try the idea in your browser</h2>
+    <p class="sub">This scene is drawn live. Move the sliders to see what each option does to a frame. Resolution is the big saver: half the width and height means a quarter of the pixels to shade.</p>
+    <div class="demo">
+      <div class="screen">
+        <canvas id="view" width="960" height="540" role="img" aria-label="Animated sample scene with the demake options applied"></canvas>
+        <span class="tag l pixel" id="tagL">ORIGINAL</span>
+        <span class="tag r pixel" id="tagR">DEMAKE</span>
+      </div>
+      <div class="presets" role="group" aria-label="Presets">
+        <button type="button" data-preset="off">Off</button>
+        <button type="button" data-preset="light">Light</button>
+        <button type="button" data-preset="ps2" aria-pressed="true">PS2</button>
+        <button type="button" data-preset="ps1">PS1</button>
+        <button type="button" data-preset="potato">Potato</button>
+        <button type="button" class="toggle" id="split" aria-pressed="true">Split view: on</button>
+      </div>
+      <div class="controls">
+        <div class="control">
+          <label for="scale">3D render resolution <output id="scaleOut" for="scale"></output></label>
+          <input id="scale" type="range" min="25" max="100" step="1" value="75">
+        </div>
+        <div class="control">
+          <label for="pix">Pixelate blocks <output id="pixOut" for="pix"></output></label>
+          <input id="pix" type="range" min="1" max="8" step="1" value="2">
+        </div>
+        <div class="control">
+          <label for="bits">Colours per channel <output id="bitsOut" for="bits"></output></label>
+          <input id="bits" type="range" min="2" max="8" step="1" value="8">
+        </div>
+      </div>
+      <p class="meter">Pixels the GPU shades for the 3D scene: <b id="cost">56%</b> of the original.</p>
+      <p class="note">Browser illustration only. Real savings depend on the game; measure them with the built-in fps/VRAM log.</p>
+    </div>
+  </section>
+
+  <section id="how" aria-labelledby="how-title">
+    <h2 id="how-title" class="pixel">How it works</h2>
+    <p class="sub">Games don't draw pictures themselves. They send commands to the GPU through DirectX, and DirectX lives in a DLL. Windows looks for DLLs in the game's folder first, so AnyDemake's DLL gets loaded instead of the real one. It passes every call on to the real DirectX, after editing a few of them.</p>
+    <div class="flow" role="img" aria-label="Diagram: the game sends commands to the AnyDemake DLL, which forwards edited commands to the real DirectX DLL and the GPU">Game ──commands──► <span class="hl">d3d11.dll / d3d12.dll (AnyDemake)</span> ──edited commands──► System32 DirectX ──► GPU
+
+"make a 1920×1080 buffer"      →  "make a 960×540 buffer"           ¼ of the pixels to shade
+"upload this 4096² texture"    →  "upload its 1024² mip"            1/16 of the VRAM
+"16× anisotropic filtering"    →  "plain bilinear" or "point"       fewer texture reads
+"present the frame"            →  pixelate + fewer colours first    retro look (optional)</div>
+    <div class="grid3" style="margin-top:16px">
+      <div class="card"><span class="num pixel">01</span><h3>Gameplay untouched</h3><p>Positions, hits and timing are computed by the game on the CPU. AnyDemake only edits drawing commands, so a demade game plays exactly like the original.</p></div>
+      <div class="card"><span class="num pixel">02</span><h3>Menus stay sharp</h3><p>Only the 3D scene buffers are made smaller. The game's UI still draws at full resolution on top.</p></div>
+      <div class="card"><span class="num pixel">03</span><h3>One click to undo</h3><p>Remove deletes everything it wrote and restores any DLL or Engine.ini it backed up. Nothing in the game's own files is patched.</p></div>
+    </div>
+  </section>
+
+  <section id="options" aria-labelledby="options-title">
+    <h2 id="options-title" class="pixel">What each option does</h2>
+    <p class="sub">Pick a preset (Off, Light, PS2, PS1, Potato) or set every option yourself. They are baked into the DLL that gets written, so the game folder needs nothing else.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">Option</th><th scope="col">DirectX 11</th><th scope="col">DirectX 12</th><th scope="col">Saves</th></tr></thead>
+        <tbody>
+          <tr><td><b>3D render resolution</b> (25–100%)</td><td class="y">Yes</td><td class="p">Unreal games</td><td>GPU time</td></tr>
+          <tr><td><b>Texture size</b> (½ to 1/16)</td><td class="y">Yes</td><td class="p">Unreal games</td><td>VRAM, bandwidth</td></tr>
+          <tr><td><b>Texture filtering</b> (point / bilinear)</td><td class="y">Yes</td><td class="y">Yes</td><td>GPU time</td></tr>
+          <tr><td><b>Unreal Engine settings</b> (Lumen, shadows, effects)</td><td class="y">Yes</td><td class="y">Yes</td><td>GPU time</td></tr>
+          <tr><td><b>Pixelate &amp; colour reduction</b></td><td class="y">Yes</td><td class="y">Yes</td><td class="n">Look only</td></tr>
+          <tr><td><b>fps / frame time / VRAM log</b></td><td class="y">Yes</td><td class="y">Yes</td><td class="n">Measuring</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="start" aria-labelledby="start-title">
+    <h2 id="start-title" class="pixel">Get started in a minute</h2>
+    <ol class="steps">
+      <li><b>Download</b> the zip from <a href="https://github.com/hoanglt1223/anydemake/releases/latest">Releases</a> and run <code>anydemake.exe</code>. No installer.</li>
+      <li><b>Choose the game folder</b>: the one with the game's <code>.exe</code>. For Unreal Engine games the root folder works too.</li>
+      <li><b>Pick a preset</b> and press <b>Install</b>. Start the game. Not happy? Press <b>Remove</b>.</li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="help-title">
+    <div class="callout">
+      <h2 id="help-title" class="pixel">Help measure it</h2>
+      <p class="sub" style="margin:0 auto 18px">AnyDemake is new. Its automated tests run on a software GPU, and real-game numbers don't exist yet. Run a game once with the <b>Off</b> preset and the log on, then once with a preset, and share the two logs. That is the most useful contribution right now.</p>
+      <a class="btn ghost" href="https://github.com/hoanglt1223/anydemake/blob/main/docs/TESTING.md">How to test a game</a>
+    </div>
+  </section>
+
+  <section id="faq" aria-labelledby="faq-title">
+    <h2 id="faq-title" class="pixel">FAQ</h2>
+    <details><summary>Can I use it in online games?</summary><p>No. Games with anti-cheat (Vanguard, EasyAntiCheat, BattlEye and others) may ban accounts for loading a foreign DLL. AnyDemake is meant for offline and single-player games, and it does nothing to hide itself.</p></details>
+    <details><summary>Will it make every game faster?</summary><p>Only games limited by the GPU or VRAM. If a game is slow because of the CPU (AI, physics, huge simulations), drawing fewer pixels won't help. It also can't add GPU features your card doesn't have, such as ray tracing or mesh shaders.</p></details>
+    <details><summary>Which games does it work with?</summary><p>DirectX 11 games get every option. DirectX 12 games get filtering and the look options; Unreal Engine games also get lower resolution and textures through their Engine.ini. Vulkan and OpenGL games aren't supported yet.</p></details>
+    <details><summary>Only part of the picture shows. What now?</summary><p>Some games read their screen buffers by pixel position. Set "3D render resolution" back to Full for that game. If the game copies between buffers, AnyDemake notices, stops scaling, and says so in the log.</p></details>
+    <details><summary>Is it safe for my game files?</summary><p>It only adds files next to the game. Any DLL that already sits there is backed up first (and AnyDemake refuses to overwrite an existing backup). Engine.ini edits are a marked block, and the original file is kept for Remove.</p></details>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p class="pixel" style="font-size:11px">AnyDemake</p>
+    <p>MIT licensed · Made by <a href="https://github.com/hoanglt1223">hoanglt1223</a> · Not affiliated with any game publisher.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const view = document.getElementById('view');
+  const ctx = view.getContext('2d');
+  const W = view.width, H = view.height;
+  const scene = document.createElement('canvas');
+  scene.width = W; scene.height = H;
+  const sctx = scene.getContext('2d');
+  const low = document.createElement('canvas');
+  const lctx = low.getContext('2d', { willReadFrequently: true });
+
+  const el = id => document.getElementById(id);
+  const scale = el('scale'), pix = el('pix'), bits = el('bits'), split = el('split');
+  const presets = {
+    off: [100, 1, 8], light: [100, 1, 8], ps2: [75, 2, 8], ps1: [50, 3, 5], potato: [50, 4, 4],
+  };
+  let splitOn = true;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function drawScene(t) {
+    const g = sctx;
+    const sky = g.createLinearGradient(0, 0, 0, H * 0.62);
+    sky.addColorStop(0, '#120a3a'); sky.addColorStop(0.55, '#6b1f7a'); sky.addColorStop(1, '#ff7a59');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 70; i++) {
+      const x = (i * 137.5) % W, y = (i * 61.7) % (H * 0.4);
+      g.fillStyle = `rgba(255,255,255,${0.3 + 0.7 * Math.abs(Math.sin(t / 900 + i))})`;
+      g.fillRect(x, y, 2, 2);
+    }
+    const cx = W / 2, cy = H * 0.5, r = H * 0.2;
+    const sun = g.createLinearGradient(0, cy - r, 0, cy + r);
+    sun.addColorStop(0, '#ffe66d'); sun.addColorStop(1, '#ff3d8b');
+    g.save();
+    g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.clip();
+    g.fillStyle = sun; g.fillRect(cx - r, cy - r, r * 2, r * 2);
+    g.fillStyle = '#6b1f7a';
+    for (let i = 0; i < 6; i++) g.fillRect(cx - r, cy + i * r * 0.17, r * 2, 3 + i * 1.6);
+    g.restore();
+    const layers = [['#3a1460', 0.62, 70, 0.02], ['#241046', 0.66, 50, 0.05]];
+    for (const [col, base, amp, speed] of layers) {
+      g.fillStyle = col; g.beginPath(); g.moveTo(0, H);
+      for (let x = 0; x <= W; x += 8) {
+        const k = x + t * speed;
+        g.lineTo(x, H * base - amp * (0.55 + 0.45 * Math.sin(k / 97) * Math.cos(k / 41)));
+      }
+      g.lineTo(W, H); g.fill();
+    }
+    const horizon = H * 0.66;
+    const floor = g.createLinearGradient(0, horizon, 0, H);
+    floor.addColorStop(0, '#1a0b33'); floor.addColorStop(1, '#05030f');
+    g.fillStyle = floor; g.fillRect(0, horizon, W, H - horizon);
+    g.strokeStyle = '#ff4fa3'; g.lineWidth = 2;
+    for (let i = -14; i <= 14; i++) {
+      g.beginPath(); g.moveTo(W / 2 + i * 12, horizon); g.lineTo(W / 2 + i * 120, H); g.stroke();
+    }
+    const off = (t / 18) % 40;
+    for (let i = 0; i < 12; i++) {
+      const z = (i * 40 + off) / 480;
+      const y = horizon + (H - horizon) * z * z;
+      g.globalAlpha = Math.min(1, z * 2); g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke();
+    }
+    g.globalAlpha = 1;
+    const bob = Math.sin(t / 180) * 4;
+    const car = { x: W / 2 - 70, y: H * 0.8 + bob };
+    const body = g.createLinearGradient(0, car.y, 0, car.y + 46);
+    body.addColorStop(0, '#3ee6ff'); body.addColorStop(1, '#1676a8');
+    g.fillStyle = body;
+    g.beginPath(); g.roundRect(car.x, car.y + 14, 140, 32, 8); g.fill();
+    g.beginPath(); g.roundRect(car.x + 30, car.y, 80, 22, 8); g.fill();
+    g.fillStyle = '#ff3d3d'; g.fillRect(car.x + 8, car.y + 26, 18, 8); g.fillRect(car.x + 114, car.y + 26, 18, 8);
+    g.fillStyle = '#0a0a14'; g.fillRect(car.x + 14, car.y + 44, 26, 10); g.fillRect(car.x + 100, car.y + 44, 26, 10);
+  }
+
+  function demake(s, block, b) {
+    const lw = Math.max(1, Math.round(W * s / 100)), lh = Math.max(1, Math.round(H * s / 100));
+    if (low.width !== lw || low.height !== lh) { low.width = lw; low.height = lh; }
+    lctx.imageSmoothingEnabled = true;
+    lctx.drawImage(scene, 0, 0, lw, lh);
+    if (block > 1 || b < 8) {
+      const img = lctx.getImageData(0, 0, lw, lh), d = img.data;
+      const lv = (1 << b) - 1;
+      for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) {
+        const sx = Math.min(lw - 1, Math.floor(x / block) * block + (block >> 1));
+        const sy = Math.min(lh - 1, Math.floor(y / block) * block + (block >> 1));
+        const si = (sy * lw + sx) * 4, di = (y * lw + x) * 4;
+        for (let c = 0; c < 3; c++) {
+          const v = d[si + c];
+          d[di + c] = b < 8 ? Math.round(Math.round(v / 255 * lv) / lv * 255) : v;
+        }
+      }
+      lctx.putImageData(img, 0, 0);
+    }
+  }
+
+  function frame(t) {
+    drawScene(t);
+    const s = +scale.value, block = +pix.value, b = +bits.value;
+    demake(s, block, b);
+    ctx.imageSmoothingEnabled = block <= 1;
+    ctx.drawImage(low, 0, 0, W, H);
+    if (splitOn) {
+      ctx.drawImage(scene, 0, 0, W / 2, H, 0, 0, W / 2, H);
+      ctx.fillStyle = '#fff'; ctx.fillRect(W / 2 - 1, 0, 2, H);
+    }
+    if (!reduceMotion) requestAnimationFrame(frame);
+  }
+
+  function update() {
+    el('scaleOut').textContent = scale.value + '%';
+    el('pixOut').textContent = pix.value === '1' ? 'off' : pix.value + '×' + pix.value;
+    el('bitsOut').textContent = bits.value === '8' ? 'full' : bits.value + ' bits';
+    el('cost').textContent = Math.round((scale.value / 100) ** 2 * 100) + '%';
+    el('tagL').hidden = !splitOn;
+    if (reduceMotion) frame(0);
+  }
+
+  for (const input of [scale, pix, bits]) input.addEventListener('input', () => {
+    document.querySelectorAll('[data-preset]').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    update();
+  });
+  document.querySelectorAll('[data-preset]').forEach(btn => btn.addEventListener('click', () => {
+    [scale.value, pix.value, bits.value] = presets[btn.dataset.preset];
+    document.querySelectorAll('[data-preset]').forEach(x => x.setAttribute('aria-pressed', String(x === btn)));
+    update();
+  }));
+  split.addEventListener('click', () => {
+    splitOn = !splitOn;
+    split.setAttribute('aria-pressed', String(splitOn));
+    split.textContent = 'Split view: ' + (splitOn ? 'on' : 'off');
+    update();
+  });
+  update();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

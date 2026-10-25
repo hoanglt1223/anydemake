@@ -1,0 +1,40 @@
+name: release
+
+# A pushed tag v* builds and tests anydemake.exe (both proxy DLLs are embedded
+# in it) and attaches a zip to a GitHub Release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        run: |
+          cmake -S . -B out -G "Visual Studio 17 2022" -A x64
+          cmake --build out --config Release --parallel
+          ctest --test-dir out -C Release --output-on-failure
+      - name: Package
+        shell: pwsh
+        run: |
+          $pkg = "anydemake-$env:GITHUB_REF_NAME-windows-x64"
+          New-Item -ItemType Directory "package/$pkg" | Out-Null
+          Copy-Item out/Release/anydemake.exe, README.md, LICENSE, docs/TESTING.md "package/$pkg/"
+          Compress-Archive -Path "package/$pkg" -DestinationPath "package/$pkg.zip"
+          "PKG=$pkg" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" "package/$PKG.zip" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "AnyDemake $GITHUB_REF_NAME" \
+            --notes-file .github/release-notes.md \
+            --prerelease \
+            --verify-tag

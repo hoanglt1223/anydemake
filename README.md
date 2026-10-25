@@ -1,5 +1,7 @@
 # AnyDemake
 
+[Website](https://hoanglt1223.github.io/anydemake/) · [Download](https://github.com/hoanglt1223/anydemake/releases/latest)
+
 Make heavy PC games lighter by dropping a `d3d11.dll` and a `d3d12.dll` next to the game's `.exe`. The DLLs sit between the game and DirectX and rewrite graphics commands on the way through: lower 3D render resolution, smaller textures, cheaper texture filtering, and an optional retro look. Game logic is untouched, so gameplay stays the same.
 
 ## Use

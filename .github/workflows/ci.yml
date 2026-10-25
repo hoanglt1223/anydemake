@@ -1,0 +1,23 @@
+name: ci
+
+# Builds both proxies and the configurator, then runs the headless tests
+# (WARP devices, hidden windows) on a Windows runner.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B out -G "Visual Studio 17 2022" -A x64
+      - name: Build
+        run: cmake --build out --config Release --parallel
+      - name: Test
+        run: ctest --test-dir out -C Release --output-on-failure
