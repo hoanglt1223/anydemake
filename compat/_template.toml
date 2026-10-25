@@ -1,0 +1,17 @@
+# One file per game: compat/<game-slug>.toml. Same shape as the AnyGBA compat
+# files; measurements come from the anydemake-d3d1x.log fps/VRAM lines.
+title = "Game name"
+api = "d3d11"                  # d3d11 | d3d12 | unreal-d3d12
+engine = ""                    # unreal4, unreal5, re-engine, unity, ...
+stage = "untested"             # untested | starts | works | improved | broken
+gpu = ""                       # e.g. "GTX 1050 Ti 4 GB"
+resolution = "1920x1080"
+game_settings = "low"          # in-game preset used for both runs
+preset = "ps1"                 # AnyDemake preset or options used
+fps_before = 0.0
+fps_after = 0.0
+vram_mb_before = 0
+vram_mb_after = 0
+issues = []                    # e.g. ["only top-left quarter visible with render scale 50"]
+evidence = ""                  # what was played and for how long
+updated = 2026-10-25

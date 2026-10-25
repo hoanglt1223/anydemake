@@ -1,0 +1,19 @@
+# Exports of System32\d3d12.dll (Windows 11 26100): ordinal name. Generated forwarders cover
+# every name not implemented in proxy/d3d12-proxy.c, so games importing any of them still load.
+103 D3D12CoreCreateLayeredDevice
+104 D3D12CoreGetLayeredDeviceSize
+105 D3D12CoreRegisterLayers
+101 D3D12CreateDevice
+106 D3D12CreateRootSignatureDeserializer
+107 D3D12CreateVersionedRootSignatureDeserializer
+109 D3D12EnableExperimentalFeatures
+102 D3D12GetDebugInterface
+110 D3D12GetInterface
+111 D3D12PIXEventsReplaceBlock
+112 D3D12PIXGetThreadInfo
+113 D3D12PIXNotifyWakeFromFenceSignal
+114 D3D12PIXReportCounter
+115 D3D12SerializeRootSignature
+116 D3D12SerializeVersionedRootSignature
+117 GetBehaviorValue
+100 SetAppCompatStringPointer

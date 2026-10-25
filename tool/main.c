@@ -17,24 +17,29 @@ static int usage(void)
              L"       anydemake --out <game dir> [--preset off|light|ps2|ps1|potato]\n"
              L"                 [--mip-skip 0-4] [--mip-skip-default] [--min-size N]\n"
              L"                 [--sampler keep|point|bilinear] [--pixelate N] [--color-bits 0-8]\n"
+             L"                 [--render-scale 25-100] [--api d3d11|d3d12|both] [--unreal auto|off]\n"
              L"                 [--log] [--force]\n"
              L"       anydemake --read <game dir | dll>\n"
              L"       anydemake --remove <game dir>\n");
     return 2;
 }
 
-static void print_config(const demake_config *c)
+static void print_config(const demake_config *c, unsigned apis)
 {
-    wprintf(L"mip_skip=%u\nmip_skip_default=%u\nmin_texture_size=%u\nsampler=%S\npixelate=%u\ncolor_bits=%u\nlog=%u\n",
+    if (apis)
+        wprintf(L"installed=%s%s\n", apis & DEMAKE_API_D3D11 ? L"d3d11 " : L"", apis & DEMAKE_API_D3D12 ? L"d3d12" : L"");
+    wprintf(L"mip_skip=%u\nmip_skip_default=%u\nmin_texture_size=%u\nsampler=%S\npixelate=%u\ncolor_bits=%u\n"
+            L"render_scale=%u\nlog=%u\n",
             c->mip_skip, c->mip_skip_default, c->min_texture_size,
-            c->sampler_mode < 3 ? sampler_names[c->sampler_mode] : "?", c->pixelate, c->color_bits, c->log);
+            c->sampler_mode < 3 ? sampler_names[c->sampler_mode] : "?", c->pixelate, c->color_bits, c->render_scale,
+            c->log);
 }
 
-static int parse_uint(const wchar_t *s, unsigned max, uint32_t *out)
+static int parse_uint(const wchar_t *s, unsigned lo, unsigned hi, uint32_t *out)
 {
     wchar_t *end;
     unsigned long v = wcstoul(s, &end, 10);
-    if (!*s || *end || v > max)
+    if (!*s || *end || v < lo || v > hi)
         return 0;
     *out = (uint32_t)v;
     return 1;
@@ -42,21 +47,21 @@ static int parse_uint(const wchar_t *s, unsigned max, uint32_t *out)
 
 static int run_cli(int argc, wchar_t **argv)
 {
-    demake_config cfg;
-    demake_config_default(&cfg);
+    demake_options o;
+    demake_options_default(&o);
     const wchar_t *out = NULL;
-    int force = 0;
-    wchar_t msg[MAX_PATH + 200];
+    wchar_t msg[4 * MAX_PATH + 800];
 
     for (int i = 1; i < argc; i++) {
         const wchar_t *a = argv[i];
         const wchar_t *v = i + 1 < argc ? argv[i + 1] : NULL;
         if (!wcscmp(a, L"--read") && v) {
-            if (demake_read(v, &cfg) != 0) {
+            unsigned apis = 0;
+            if (demake_read(v, &o.cfg, &apis) != 0) {
                 fwprintf(stderr, L"no AnyDemake config in %s\n", v);
                 return 1;
             }
-            print_config(&cfg);
+            print_config(&o.cfg, apis);
             return 0;
         } else if (!wcscmp(a, L"--remove") && v) {
             int rc = demake_remove(v, msg, sizeof msg / sizeof msg[0]);
@@ -70,16 +75,16 @@ static int run_cli(int argc, wchar_t **argv)
             const demake_preset *p = demake_find_preset(name);
             if (!p)
                 return usage();
-            uint32_t log = cfg.log;
-            cfg = p->cfg;
-            cfg.log = log;
+            uint32_t log = o.cfg.log;
+            o.cfg = p->cfg;
+            o.cfg.log = log;
         } else if (!wcscmp(a, L"--mip-skip") && v) {
-            if (!parse_uint(argv[++i], 4, &cfg.mip_skip))
+            if (!parse_uint(argv[++i], 0, 4, &o.cfg.mip_skip))
                 return usage();
         } else if (!wcscmp(a, L"--mip-skip-default")) {
-            cfg.mip_skip_default = 1;
+            o.cfg.mip_skip_default = 1;
         } else if (!wcscmp(a, L"--min-size") && v) {
-            if (!parse_uint(argv[++i], 16384, &cfg.min_texture_size))
+            if (!parse_uint(argv[++i], 1, 16384, &o.cfg.min_texture_size))
                 return usage();
         } else if (!wcscmp(a, L"--sampler") && v) {
             i++;
@@ -88,29 +93,50 @@ static int run_cli(int argc, wchar_t **argv)
                 wchar_t w[16];
                 MultiByteToWideChar(CP_UTF8, 0, sampler_names[s], -1, w, 16);
                 if (!wcscmp(argv[i], w)) {
-                    cfg.sampler_mode = s;
+                    o.cfg.sampler_mode = s;
                     found = 1;
                 }
             }
             if (!found)
                 return usage();
         } else if (!wcscmp(a, L"--pixelate") && v) {
-            if (!parse_uint(argv[++i], 16, &cfg.pixelate))
+            if (!parse_uint(argv[++i], 0, 16, &o.cfg.pixelate))
                 return usage();
         } else if (!wcscmp(a, L"--color-bits") && v) {
-            if (!parse_uint(argv[++i], 8, &cfg.color_bits))
+            if (!parse_uint(argv[++i], 0, 8, &o.cfg.color_bits))
+                return usage();
+        } else if (!wcscmp(a, L"--render-scale") && v) {
+            if (!parse_uint(argv[++i], 25, 100, &o.cfg.render_scale))
+                return usage();
+        } else if (!wcscmp(a, L"--api") && v) {
+            i++;
+            if (!wcscmp(argv[i], L"d3d11"))
+                o.apis = DEMAKE_API_D3D11;
+            else if (!wcscmp(argv[i], L"d3d12"))
+                o.apis = DEMAKE_API_D3D12;
+            else if (!wcscmp(argv[i], L"both"))
+                o.apis = DEMAKE_API_ALL;
+            else
+                return usage();
+        } else if (!wcscmp(a, L"--unreal") && v) {
+            i++;
+            if (!wcscmp(argv[i], L"auto"))
+                o.unreal = 1;
+            else if (!wcscmp(argv[i], L"off"))
+                o.unreal = 0;
+            else
                 return usage();
         } else if (!wcscmp(a, L"--log")) {
-            cfg.log = 1;
+            o.cfg.log = 1;
         } else if (!wcscmp(a, L"--force")) {
-            force = 1;
+            o.force = 1;
         } else {
             return usage();
         }
     }
     if (!out)
         return usage();
-    int rc = demake_install(out, &cfg, force, msg, sizeof msg / sizeof msg[0]);
+    int rc = demake_install(out, &o, msg, sizeof msg / sizeof msg[0]);
     fwprintf(rc ? stderr : stdout, L"%s\n", msg);
     return rc ? 1 : 0;
 }
@@ -118,15 +144,21 @@ static int run_cli(int argc, wchar_t **argv)
 /* ---- window ------------------------------------------------------------ */
 
 enum {
-    ID_PRESET = 100, ID_MIP, ID_MIP_DEFAULT, ID_MIN, ID_SAMPLER, ID_PIXELATE, ID_BITS, ID_LOG,
-    ID_DIR, ID_BROWSE, ID_INSTALL, ID_REMOVE, ID_LOAD, ID_STATUS,
+    ID_PRESET = 100, ID_MIP, ID_MIP_DEFAULT, ID_MIN, ID_SAMPLER, ID_PIXELATE, ID_BITS, ID_SCALE, ID_LOG,
+    ID_D3D11, ID_D3D12, ID_UNREAL, ID_DIR, ID_BROWSE, ID_INSTALL, ID_REMOVE, ID_LOAD, ID_STATUS,
 };
+
+#define WIN_W 520
+#define WIN_H 620
 
 static HWND wnd, ctl[ID_STATUS + 1];
 static HFONT font;
 static const unsigned pixelate_values[] = {0, 2, 3, 4, 6, 8};
 static const unsigned bits_values[] = {0, 6, 5, 4, 3, 2};
 static const unsigned min_values[] = {16, 32, 64, 128, 256};
+static const unsigned scale_values[] = {100, 75, 67, 50, 33, 25};
+
+#define COUNT(a) ((int)(sizeof a / sizeof a[0]))
 
 static HWND add(const wchar_t *cls, const wchar_t *text, DWORD style, int x, int y, int w, int h, int id)
 {
@@ -143,14 +175,19 @@ static void label(const wchar_t *text, int y)
     add(L"STATIC", text, 0, 16, y + 3, 200, 20, 0);
 }
 
-static HWND combo(int id, int y)
+static void combo(int id, int y)
 {
-    return add(L"COMBOBOX", L"", CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL, 220, y, 260, 200, id);
+    add(L"COMBOBOX", L"", CBS_DROPDOWNLIST | WS_TABSTOP | WS_VSCROLL, 220, y, 284, 240, id);
 }
 
 static void combo_add(int id, const wchar_t *text)
 {
     SendMessageW(ctl[id], CB_ADDSTRING, 0, (LPARAM)text);
+}
+
+static void check(int id, const wchar_t *text, int x, int y, int w)
+{
+    add(L"BUTTON", text, BS_AUTOCHECKBOX | WS_TABSTOP, x, y, w, 22, id);
 }
 
 static int index_of(const unsigned *values, int n, unsigned v)
@@ -161,29 +198,48 @@ static int index_of(const unsigned *values, int n, unsigned v)
     return 0;
 }
 
-#define COUNT(a) ((int)(sizeof a / sizeof a[0]))
+static void set_check(int id, int on)
+{
+    SendMessageW(ctl[id], BM_SETCHECK, on ? BST_CHECKED : BST_UNCHECKED, 0);
+}
+
+static int get_check(int id)
+{
+    return SendMessageW(ctl[id], BM_GETCHECK, 0, 0) == BST_CHECKED;
+}
+
+static unsigned get_sel(int id)
+{
+    LRESULT i = SendMessageW(ctl[id], CB_GETCURSEL, 0, 0);
+    return i < 0 ? 0 : (unsigned)i;
+}
 
 static void show_config(const demake_config *c)
 {
     SendMessageW(ctl[ID_MIP], CB_SETCURSEL, c->mip_skip, 0);
-    SendMessageW(ctl[ID_MIP_DEFAULT], BM_SETCHECK, c->mip_skip_default ? BST_CHECKED : BST_UNCHECKED, 0);
+    set_check(ID_MIP_DEFAULT, c->mip_skip_default);
     SendMessageW(ctl[ID_MIN], CB_SETCURSEL, index_of(min_values, COUNT(min_values), c->min_texture_size), 0);
     SendMessageW(ctl[ID_SAMPLER], CB_SETCURSEL, c->sampler_mode, 0);
     SendMessageW(ctl[ID_PIXELATE], CB_SETCURSEL, index_of(pixelate_values, COUNT(pixelate_values), c->pixelate), 0);
     SendMessageW(ctl[ID_BITS], CB_SETCURSEL, index_of(bits_values, COUNT(bits_values), c->color_bits), 0);
-    SendMessageW(ctl[ID_LOG], BM_SETCHECK, c->log ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessageW(ctl[ID_SCALE], CB_SETCURSEL, index_of(scale_values, COUNT(scale_values), c->render_scale), 0);
+    set_check(ID_LOG, c->log);
 }
 
-static void read_controls(demake_config *c)
+static void read_controls(demake_options *o)
 {
-    demake_config_default(c);
-    c->mip_skip = (uint32_t)SendMessageW(ctl[ID_MIP], CB_GETCURSEL, 0, 0);
-    c->mip_skip_default = SendMessageW(ctl[ID_MIP_DEFAULT], BM_GETCHECK, 0, 0) == BST_CHECKED;
-    c->min_texture_size = min_values[SendMessageW(ctl[ID_MIN], CB_GETCURSEL, 0, 0)];
-    c->sampler_mode = (uint32_t)SendMessageW(ctl[ID_SAMPLER], CB_GETCURSEL, 0, 0);
-    c->pixelate = pixelate_values[SendMessageW(ctl[ID_PIXELATE], CB_GETCURSEL, 0, 0)];
-    c->color_bits = bits_values[SendMessageW(ctl[ID_BITS], CB_GETCURSEL, 0, 0)];
-    c->log = SendMessageW(ctl[ID_LOG], BM_GETCHECK, 0, 0) == BST_CHECKED;
+    demake_options_default(o);
+    demake_config *c = &o->cfg;
+    c->mip_skip = get_sel(ID_MIP);
+    c->mip_skip_default = get_check(ID_MIP_DEFAULT);
+    c->min_texture_size = min_values[get_sel(ID_MIN)];
+    c->sampler_mode = get_sel(ID_SAMPLER);
+    c->pixelate = pixelate_values[get_sel(ID_PIXELATE)];
+    c->color_bits = bits_values[get_sel(ID_BITS)];
+    c->render_scale = scale_values[get_sel(ID_SCALE)];
+    c->log = get_check(ID_LOG);
+    o->apis = (get_check(ID_D3D11) ? DEMAKE_API_D3D11 : 0) | (get_check(ID_D3D12) ? DEMAKE_API_D3D12 : 0);
+    o->unreal = get_check(ID_UNREAL);
 }
 
 static void status(const wchar_t *text)
@@ -204,25 +260,32 @@ static int get_dir(wchar_t *dir)
 
 static void on_command(int id, int code)
 {
-    wchar_t dir[MAX_PATH], msg[MAX_PATH + 200];
-    demake_config c;
+    wchar_t dir[MAX_PATH], msg[4 * MAX_PATH + 800];
+    demake_options o;
     switch (id) {
     case ID_PRESET:
         if (code == CBN_SELCHANGE) {
-            int i = (int)SendMessageW(ctl[ID_PRESET], CB_GETCURSEL, 0, 0);
-            demake_config p = demake_presets[i].cfg;
-            p.log = SendMessageW(ctl[ID_LOG], BM_GETCHECK, 0, 0) == BST_CHECKED;
+            demake_config p = demake_presets[get_sel(ID_PRESET)].cfg;
+            p.log = get_check(ID_LOG);
             show_config(&p);
         }
         break;
     case ID_BROWSE: {
         BROWSEINFOW bi = {0};
         bi.hwndOwner = wnd;
-        bi.lpszTitle = L"Folder with the game's .exe";
+        bi.lpszTitle = L"Folder with the game's .exe (for Unreal games the root folder also works)";
         bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
         PIDLIST_ABSOLUTE pidl = SHBrowseForFolderW(&bi);
-        if (pidl && SHGetPathFromIDListW(pidl, dir))
+        if (pidl && SHGetPathFromIDListW(pidl, dir)) {
             SetWindowTextW(ctl[ID_DIR], dir);
+            wchar_t project[MAX_PATH], bin[MAX_PATH];
+            if (unreal_find(dir, project, bin) == 0) {
+                _snwprintf(msg, COUNT(msg), L"Unreal Engine game \"%s\"; DLLs go to %s", project, bin);
+                status(msg);
+            } else {
+                status(L"");
+            }
+        }
         if (pidl)
             CoTaskMemFree(pidl);
         break;
@@ -230,13 +293,20 @@ static void on_command(int id, int code)
     case ID_INSTALL: {
         if (!get_dir(dir))
             break;
-        read_controls(&c);
-        int rc = demake_install(dir, &c, 0, msg, COUNT(msg));
-        if (rc == -2 && MessageBoxW(wnd,
-                                    L"This folder already has a d3d11.dll from another mod or tool.\n\n"
-                                    L"Back it up (d3d11.dll.anydemake-backup) and replace it?",
-                                    L"AnyDemake", MB_YESNO | MB_ICONWARNING) == IDYES)
-            rc = demake_install(dir, &c, 1, msg, COUNT(msg));
+        read_controls(&o);
+        if (!o.apis) {
+            status(L"Tick DirectX 11, DirectX 12, or both.");
+            break;
+        }
+        int rc = demake_install(dir, &o, msg, COUNT(msg));
+        if (rc == DEMAKE_ERR_FOREIGN &&
+            MessageBoxW(wnd,
+                        L"This folder already has a d3d11.dll or d3d12.dll from another mod or tool.\n\n"
+                        L"Back it up (.anydemake-backup) and replace it? Remove puts it back.",
+                        L"AnyDemake", MB_YESNO | MB_ICONWARNING) == IDYES) {
+            o.force = 1;
+            rc = demake_install(dir, &o, msg, COUNT(msg));
+        }
         status(msg);
         break;
     }
@@ -248,11 +318,14 @@ static void on_command(int id, int code)
         break;
     case ID_LOAD:
         if (get_dir(dir)) {
-            if (demake_read(dir, &c) == 0) {
-                show_config(&c);
-                status(L"Loaded the settings of the installed d3d11.dll.");
+            unsigned apis = 0;
+            if (demake_read(dir, &o.cfg, &apis) == 0) {
+                show_config(&o.cfg);
+                set_check(ID_D3D11, apis & DEMAKE_API_D3D11);
+                set_check(ID_D3D12, apis & DEMAKE_API_D3D12);
+                status(L"Loaded the settings of the installed DLLs.");
             } else {
-                status(L"No AnyDemake d3d11.dll in this folder.");
+                status(L"No AnyDemake DLL in this folder.");
             }
         }
         break;
@@ -288,22 +361,36 @@ static int run_gui(void)
     wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
     wc.lpszClassName = L"anydemake";
     RegisterClassW(&wc);
-    RECT r = {0, 0, 500, 470};
+    RECT r = {0, 0, WIN_W, WIN_H};
     DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
     AdjustWindowRect(&r, style, FALSE);
     wnd = CreateWindowExW(0, wc.lpszClassName, L"AnyDemake", style, CW_USEDEFAULT, CW_USEDEFAULT, r.right - r.left,
                           r.bottom - r.top, NULL, NULL, wc.hInstance, NULL);
 
+    wchar_t t[64];
     int y = 16;
     label(L"Game folder (with the .exe):", y);
-    add(L"EDIT", L"", WS_BORDER | ES_AUTOHSCROLL | WS_TABSTOP, 16, y + 24, 380, 24, ID_DIR);
-    add(L"BUTTON", L"Browse...", WS_TABSTOP, 404, y + 24, 76, 24, ID_BROWSE);
-    y += 64;
+    add(L"EDIT", L"", WS_BORDER | ES_AUTOHSCROLL | WS_TABSTOP, 16, y + 24, 404, 24, ID_DIR);
+    add(L"BUTTON", L"Browse...", WS_TABSTOP, 428, y + 24, 76, 24, ID_BROWSE);
+    y += 62;
+    label(L"Install for:", y);
+    check(ID_D3D11, L"DirectX 11", 220, y, 100);
+    check(ID_D3D12, L"DirectX 12", 330, y, 100);
+    y += 26;
+    check(ID_UNREAL, L"Unreal Engine games: also lower Engine.ini settings", 220, y, 290);
+    y += 34;
     label(L"Preset:", y);
     combo(ID_PRESET, y);
     for (int i = 0; i < demake_preset_count; i++)
         combo_add(ID_PRESET, demake_presets[i].label);
     y += 40;
+    label(L"3D render resolution:", y);
+    combo(ID_SCALE, y);
+    for (int i = 0; i < COUNT(scale_values); i++) {
+        _snwprintf(t, COUNT(t), i ? L"%u%% of the screen" : L"Full (%u%%)", scale_values[i]);
+        combo_add(ID_SCALE, t);
+    }
+    y += 32;
     label(L"Texture size:", y);
     combo(ID_MIP, y);
     combo_add(ID_MIP, L"Full");
@@ -311,15 +398,13 @@ static int run_gui(void)
     combo_add(ID_MIP, L"1/4 (1/16 VRAM)");
     combo_add(ID_MIP, L"1/8");
     combo_add(ID_MIP, L"1/16");
-    y += 32;
-    add(L"BUTTON", L"Also shrink streamed textures (riskier)", BS_AUTOCHECKBOX | WS_TABSTOP, 220, y, 270, 22,
-        ID_MIP_DEFAULT);
     y += 30;
+    check(ID_MIP_DEFAULT, L"Also shrink streamed textures (riskier)", 220, y, 290);
+    y += 28;
     label(L"Never shrink below:", y);
     combo(ID_MIN, y);
     for (int i = 0; i < COUNT(min_values); i++) {
-        wchar_t t[16];
-        _snwprintf(t, 16, L"%u px", min_values[i]);
+        _snwprintf(t, COUNT(t), L"%u px", min_values[i]);
         combo_add(ID_MIN, t);
     }
     y += 32;
@@ -329,40 +414,42 @@ static int run_gui(void)
     combo_add(ID_SAMPLER, L"Pixelated (point)");
     combo_add(ID_SAMPLER, L"Bilinear, no anisotropic");
     y += 32;
-    label(L"Pixelate screen:", y);
+    label(L"Pixelate screen (look only):", y);
     combo(ID_PIXELATE, y);
     combo_add(ID_PIXELATE, L"Off");
     for (int i = 1; i < COUNT(pixelate_values); i++) {
-        wchar_t t[32];
-        _snwprintf(t, 32, L"%ux%u blocks", pixelate_values[i], pixelate_values[i]);
+        _snwprintf(t, COUNT(t), L"%ux%u blocks", pixelate_values[i], pixelate_values[i]);
         combo_add(ID_PIXELATE, t);
     }
     y += 32;
-    label(L"Colours:", y);
+    label(L"Colours (look only):", y);
     combo(ID_BITS, y);
     combo_add(ID_BITS, L"Full");
     for (int i = 1; i < COUNT(bits_values); i++) {
-        wchar_t t[48];
-        _snwprintf(t, 48, L"%u bits per channel (%u colours)", bits_values[i], 1u << (3 * bits_values[i]));
+        _snwprintf(t, COUNT(t), L"%u bits per channel (%u colours)", bits_values[i], 1u << (3 * bits_values[i]));
         combo_add(ID_BITS, t);
     }
     y += 32;
-    add(L"BUTTON", L"Write anydemake.log next to the game", BS_AUTOCHECKBOX | WS_TABSTOP, 220, y, 270, 22, ID_LOG);
-    y += 36;
-    add(L"BUTTON", L"Install d3d11.dll", BS_DEFPUSHBUTTON | WS_TABSTOP, 16, y, 150, 28, ID_INSTALL);
-    add(L"BUTTON", L"Load installed", WS_TABSTOP, 174, y, 150, 28, ID_LOAD);
-    add(L"BUTTON", L"Remove", WS_TABSTOP, 332, y, 148, 28, ID_REMOVE);
+    check(ID_LOG, L"Write anydemake-d3d1x.log next to the game", 220, y, 290);
+    y += 34;
+    add(L"BUTTON", L"Install", BS_DEFPUSHBUTTON | WS_TABSTOP, 16, y, 156, 28, ID_INSTALL);
+    add(L"BUTTON", L"Load installed", WS_TABSTOP, 182, y, 156, 28, ID_LOAD);
+    add(L"BUTTON", L"Remove", WS_TABSTOP, 348, y, 156, 28, ID_REMOVE);
     y += 40;
-    add(L"STATIC", L"DirectX 11 games only for now. Offline games only: games with anti-cheat "
-                   L"(Vanguard, EasyAntiCheat, BattlEye) may ban accounts for a foreign DLL. "
-                   L"Pixelate and colours change the look only; texture size and filtering save GPU work.",
-        0, 16, y, 464, 56, 0);
-    add(L"STATIC", L"", SS_SUNKEN | SS_LEFTNOWORDWRAP, 16, 470 - 30, 464, 22, ID_STATUS);
+    add(L"STATIC", L"Offline games only: games with anti-cheat (Vanguard, EasyAntiCheat, BattlEye) may ban "
+                   L"accounts for a foreign DLL. Resolution, texture size and filtering save GPU work; pixelate and "
+                   L"colours change the look only. If a game shows only part of the picture, set the render "
+                   L"resolution back to Full.",
+        0, 16, y, 488, 72, 0);
+    add(L"STATIC", L"", SS_SUNKEN | SS_LEFT, 16, WIN_H - 58, 488, 46, ID_STATUS);
 
     SendMessageW(ctl[ID_PRESET], CB_SETCURSEL, 0, 0);
-    demake_config c;
-    demake_config_default(&c);
-    show_config(&c);
+    demake_options o;
+    demake_options_default(&o);
+    show_config(&o.cfg);
+    set_check(ID_D3D11, 1);
+    set_check(ID_D3D12, 1);
+    set_check(ID_UNREAL, 1);
     ShowWindow(wnd, SW_SHOWNORMAL);
 
     MSG msg;

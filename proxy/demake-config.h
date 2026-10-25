@@ -20,5 +20,6 @@ typedef struct demake_config {
     uint32_t sampler_mode;        /* enum demake_sampler_mode */
     uint32_t pixelate;            /* block size in pixels at Present, 0/1 = off */
     uint32_t color_bits;          /* bits per channel at Present, 0 = off */
-    uint32_t log;                 /* write anydemake.log next to the DLL */
+    uint32_t log;                 /* write anydemake-<api>.log next to the DLL */
+    uint32_t render_scale;        /* percent of the screen size for 3D render targets, 0/100 = off */
 } demake_config;
